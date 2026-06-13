@@ -28,36 +28,61 @@ function normalizeTicketPayload(payload) {
           pick: item.pick || item.selection || ''
         }))
       : [];
+  const canonicalTicketType = (value, note, legs) => {
+    const source = `${value || ''} ${note || ''}`;
+    if (/混合过关/.test(source)) return '混合过关';
+    const playTypes = new Set(
+      (Array.isArray(legs) ? legs : [])
+        .map(leg => String(leg.play || '').replace(/[（(].*?[）)]/g, '').trim())
+        .filter(Boolean)
+    );
+    if (playTypes.size > 1) return '混合过关';
+
+    const exact = source.match(/([1-4])\s*(?:x|X|×|串)\s*1/);
+    if (exact) return `${exact[1]} 串 1`;
+    if (/二\s*串\s*一|两\s*场\s*二\s*串\s*一/.test(source)) return '2 串 1';
+    if (/三\s*串\s*一/.test(source)) return '3 串 1';
+    if (/四\s*串\s*一/.test(source)) return '4 串 1';
+    if (/单关/.test(source)) return '单关';
+
+    const legCount = Array.isArray(legs) ? legs.length : 0;
+    if (legCount === 1) return '单关';
+    if (legCount >= 2 && legCount <= 4) return `${legCount} 串 1`;
+    return value || '混合过关';
+  };
 
   if (!payload) return null;
 
   if (Array.isArray(payload.legs)) {
+    const legs = toLegs(payload.legs);
     return {
-      ticketType: payload.ticketType || payload.passType,
+      ticketType: canonicalTicketType(payload.ticketType || payload.passType, payload.note, legs),
       amount: toNumber(payload.amount || payload.unitAmount),
       multiple: toNumber(payload.multiple || payload.times),
       note: payload.note,
-      legs: toLegs(payload.legs)
+      legs
     };
   }
 
   if (Array.isArray(payload.matches)) {
+    const legs = toLegs(payload.matches);
     return {
-      ticketType: payload.ticketType || payload.passType,
+      ticketType: canonicalTicketType(payload.ticketType || payload.passType, payload.note, legs),
       amount: toNumber(payload.amount || payload.unitAmount),
       multiple: toNumber(payload.multiple || payload.times),
       note: payload.note,
-      legs: toLegs(payload.matches)
+      legs
     };
   }
 
   if (payload.ticketType || payload.amount || payload.multiple) {
+    const legs = Array.isArray(payload.legs) ? toLegs(payload.legs) : [];
     return {
-      ticketType: payload.ticketType || payload.passType,
+      ticketType: canonicalTicketType(payload.ticketType || payload.passType, payload.note, legs),
       amount: toNumber(payload.amount || payload.unitAmount),
       multiple: toNumber(payload.multiple || payload.times),
       note: payload.note,
-      legs: Array.isArray(payload.legs) ? payload.legs : []
+      legs
     };
   }
 
@@ -184,7 +209,7 @@ async function callOpenAiTicketParser(file, parser) {
       {
         role: 'system',
         content:
-          'You extract Chinese sports lottery football ticket data. Return only one JSON object with exactly these keys: ticketType, amount, multiple, note, legs. legs must be an array of objects with exactly these keys: league, match, play, pick. amount and multiple must be numbers. IMPORTANT: amount is the base stake before multiplier, so app stake = amount * multiple. If the ticket shows total/合计 and multiplier/倍, set amount = total / multiple. Put the visible total in note if useful. If the image is not a sports lottery ticket, return {"ticketType":"","amount":0,"multiple":1,"note":"not a ticket","legs":[]}.'
+          'You extract Chinese sports lottery football ticket data. Return only one JSON object with exactly these keys: ticketType, amount, multiple, note, legs. ticketType must be one of: 单关, 2 串 1, 3 串 1, 4 串 1, 混合过关. If the ticket says 竞彩足球混合过关 or 混合过关, return ticketType as 混合过关, even if pass type says 2x1. Put pass type such as 2x1/2×1 in note. legs must be an array of objects with exactly these keys: league, match, play, pick. amount and multiple must be numbers. IMPORTANT: amount is the base stake before multiplier, so app stake = amount * multiple. If the ticket shows total/合计 and multiplier/倍, set amount = total / multiple. Put the visible total in note if useful. If the image is not a sports lottery ticket, return {"ticketType":"","amount":0,"multiple":1,"note":"not a ticket","legs":[]}.'
       },
       {
         role: 'user',

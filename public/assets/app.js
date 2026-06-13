@@ -186,6 +186,31 @@ function addLegFromFields() {
   renderLegs();
 }
 
+function normalizeTicketTypeForSelect(ticketType, legs) {
+  const options = Array.from(ticketTypeSelect.options).map(option => option.value);
+  if (options.includes(ticketType)) return ticketType;
+
+  const text = String(ticketType || '');
+  if (/混合过关/.test(text)) return '混合过关';
+  const playTypes = new Set(
+    (Array.isArray(legs) ? legs : [])
+      .map(leg => String(leg.play || '').replace(/[（(].*?[）)]/g, '').trim())
+      .filter(Boolean)
+  );
+  if (playTypes.size > 1) return '混合过关';
+
+  const legCount = Array.isArray(legs) ? legs.length : Number(legs || 0);
+  const pass = text.match(/([1-4])\s*(?:x|X|×|串)\s*1/);
+  if (pass) return `${pass[1]} 串 1`;
+  if (/二\s*串\s*一|两\s*场\s*二\s*串\s*一/.test(text)) return '2 串 1';
+  if (/三\s*串\s*一/.test(text)) return '3 串 1';
+  if (/四\s*串\s*一/.test(text)) return '4 串 1';
+  if (/单关/.test(text)) return '单关';
+  if (legCount === 1) return '单关';
+  if (legCount >= 2 && legCount <= 4) return `${legCount} 串 1`;
+  return '混合过关';
+}
+
 function applyRecognizedTicket(ticket) {
   state.pendingLegs = ticket.legs.map(leg => ({
     league: leg.league || '未分类赛事',
@@ -193,7 +218,7 @@ function applyRecognizedTicket(ticket) {
     play: leg.play || '胜平负',
     pick: leg.pick || '待确认'
   }));
-  ticketTypeSelect.value = ticket.ticketType || `${state.pendingLegs.length} 串 1`;
+  ticketTypeSelect.value = normalizeTicketTypeForSelect(ticket.ticketType, state.pendingLegs);
   amountInput.value = ticket.amount || 20;
   multipleInput.value = ticket.multiple || 1;
   recordForm.elements.note.value = ticket.note || 'AI 识别票据，保存前已人工确认。';
