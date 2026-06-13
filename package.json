@@ -1,0 +1,22 @@
+{
+  "name": "qiudanbu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "球单簿 - 体彩足球竞猜记录工具",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "db:init": "node src/migrate.js",
+    "db:seed": "node src/migrate.js --seed"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.18.3",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
