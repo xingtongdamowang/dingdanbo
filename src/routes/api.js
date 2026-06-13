@@ -184,7 +184,7 @@ async function callOpenAiTicketParser(file, parser) {
       {
         role: 'system',
         content:
-          'You extract Chinese sports lottery football ticket data. Return only JSON with keys: ticketType, amount, multiple, note, legs. legs is an array of {league, match, play, pick}. Use numbers for amount and multiple. If uncertain, use empty strings, but keep valid JSON.'
+          'You extract Chinese sports lottery football ticket data. Return only one JSON object with exactly these keys: ticketType, amount, multiple, note, legs. legs must be an array of objects with exactly these keys: league, match, play, pick. amount and multiple must be numbers. IMPORTANT: amount is the base stake before multiplier, so app stake = amount * multiple. If the ticket shows total/合计 and multiplier/倍, set amount = total / multiple. Put the visible total in note if useful. If the image is not a sports lottery ticket, return {"ticketType":"","amount":0,"multiple":1,"note":"not a ticket","legs":[]}.'
       },
       {
         role: 'user',
@@ -192,7 +192,7 @@ async function callOpenAiTicketParser(file, parser) {
           {
             type: 'text',
             text:
-              'Parse this ticket image into JSON. Match should look like "home vs away". Do not include explanations.'
+              'Parse this football lottery ticket image into the required JSON schema. Match should look like "home vs away". Do not include explanations or extra fields.'
           },
           {
             type: 'image_url',
@@ -221,13 +221,27 @@ async function callOpenAiTicketParser(file, parser) {
     raw = await response.text();
   }
 
-  if (!response.ok) throw new Error(`OpenAI-compatible parser returned HTTP ${response.status}: ${raw.slice(0, 200)}`);
+  if (!response.ok) {
+    throw new HttpError(502, `识别服务返回 HTTP ${response.status}: ${raw.slice(0, 200)}`);
+  }
 
-  const payload = JSON.parse(raw);
+  let payload;
+  try {
+    payload = JSON.parse(raw);
+  } catch (error) {
+    throw new HttpError(502, '识别服务返回的不是有效 JSON。');
+  }
   const content = payload.choices?.[0]?.message?.content;
-  const ticket = normalizeTicketPayload(extractJsonObject(content));
+  let parsed;
+  try {
+    parsed = extractJsonObject(content);
+  } catch (error) {
+    throw new HttpError(422, 'AI 没有返回票据 JSON，请换一张更清晰的票据图片。');
+  }
+
+  const ticket = normalizeTicketPayload(parsed);
   if (!ticket || !Array.isArray(ticket.legs) || ticket.legs.length === 0) {
-    throw new Error('Model response did not contain ticket legs.');
+    throw new HttpError(422, 'AI 未识别出票据场次，请确认上传的是清晰的体彩足球票据。');
   }
   return ticket;
 }
@@ -247,10 +261,10 @@ async function callMultipartTicketParser(file, parser) {
     body: form
   });
 
-  if (!response.ok) throw new Error(`Parser endpoint returned HTTP ${response.status}`);
+  if (!response.ok) throw new HttpError(502, `识别服务返回 HTTP ${response.status}`);
 
   const ticket = normalizeTicketPayload(await response.json());
-  if (!ticket) throw new Error('Parser endpoint returned an unsupported payload shape.');
+  if (!ticket) throw new HttpError(422, '识别服务返回的数据结构不符合票据格式。');
   return ticket;
 }
 
