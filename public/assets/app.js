@@ -34,8 +34,6 @@ const state = {
   uploadedImagePath: ''
 };
 
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
 const el = id => document.getElementById(id);
 const recordForm = el('recordForm');
 const formToast = el('formToast');
@@ -82,6 +80,10 @@ const esc = value =>
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     return map[char];
   });
+const setText = (id, value) => {
+  const node = el(id);
+  if (node) node.textContent = value;
+};
 
 async function api(path, options = {}) {
   const body = options.body;
@@ -274,20 +276,15 @@ async function testAiApiConnection() {
 
 function drawStats() {
   const s = state.stats;
-  ['totalStake', 'heroStake'].forEach(id => {
-    el(id).textContent = fmt(s.totalStake);
-  });
-  ['settledPrize', 'heroPrize'].forEach(id => {
-    el(id).textContent = fmt(s.settledPrize);
-  });
-  ['netProfit', 'heroProfit'].forEach(id => {
-    el(id).textContent = fmt(s.netProfit);
-  });
-  el('pendingTag').textContent = `${s.pending} 张待核验`;
+  setText('totalStake', fmt(s.totalStake));
+  setText('settledPrize', fmt(s.settledPrize));
+  setText('netProfit', fmt(s.netProfit));
+  setText('pendingTag', `${s.pending} 张待核验`);
 }
 
 function drawQueue() {
   const box = el('heroQueue');
+  if (!box) return;
   const queue = state.records.filter(record => record.status === 'pending').slice(0, 2);
   box.innerHTML = queue.length
     ? queue
@@ -577,15 +574,31 @@ copySummary.addEventListener('click', async () => {
   }
 });
 
-document.querySelectorAll('[data-jump]').forEach(button => {
-  button.addEventListener('click', () => {
-    const target = el(button.dataset.jump);
-    if (!target) return;
-    window.scrollTo({
-      top: target.getBoundingClientRect().top + window.pageYOffset - 72,
-      behavior: prefersReducedMotion.matches ? 'auto' : 'smooth'
-    });
+const tabButtons = document.querySelectorAll('[data-tab-target]');
+const tabPanels = document.querySelectorAll('[data-tab-panel]');
+
+function activateTab(tabId) {
+  const target = el(tabId);
+  if (!target || !target.matches('[data-tab-panel]')) return;
+
+  tabPanels.forEach(panel => {
+    panel.classList.toggle('is-active', panel.id === tabId);
   });
+  tabButtons.forEach(button => {
+    const active = button.dataset.tabTarget === tabId;
+    button.classList.toggle('is-active', active);
+    if (button.getAttribute('role') === 'tab') {
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    }
+  });
+  window.history.replaceState(null, '', `#${tabId}`);
+}
+
+tabButtons.forEach(button => {
+  button.addEventListener('click', () => activateTab(button.dataset.tabTarget));
 });
+
+const initialTab = window.location.hash.replace(/^#/, '');
+if (initialTab) activateTab(initialTab);
 
 refreshAll();
