@@ -51,7 +51,7 @@ mysql -h 127.0.0.1 -P 3306 -u qiudanbu -p qiudanbu < sql/clear-demo-data.sql
 TICKET_PARSE_API_URL=https://api.example.com/v1/ticket/parse
 TICKET_PARSE_API_KEY=your_token
 TICKET_PARSE_API_MODE=openai
-TICKET_PARSE_MODEL=mimov2.5pro
+TICKET_PARSE_MODEL=gpt-5.5
 ALLOW_CLIENT_AI_ENDPOINT=false
 ```
 
@@ -61,13 +61,7 @@ ALLOW_CLIENT_AI_ENDPOINT=false
 POST /api/tickets/recognize/test
 ```
 
-如果要让页面输入框里的 `AI API 地址` 生效：
-
-```env
-ALLOW_CLIENT_AI_ENDPOINT=true
-```
-
-公网部署建议固定配置 `TICKET_PARSE_API_URL`，不要开放任意页面输入地址。
+公网部署固定使用服务器 `.env` 里的 `TICKET_PARSE_API_URL`，前端不会显示或提交 API 地址和 Key。
 
 ## 部署
 

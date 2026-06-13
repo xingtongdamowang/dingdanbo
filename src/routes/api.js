@@ -80,6 +80,10 @@ function resolveTicketParser(body = {}) {
   };
 }
 
+function missingParserMessage() {
+  return 'TICKET_PARSE_API_URL is missing. Configure it in the server .env file and restart the app.';
+}
+
 function maskEndpoint(endpoint) {
   if (!endpoint) return '';
   try {
@@ -300,12 +304,7 @@ router.post('/tickets/recognize/test', async (req, res, next) => {
   try {
     const parser = resolveTicketParser(req.body || {});
     if (!parser.endpoint) {
-      throw new HttpError(
-        400,
-        parser.allowClientEndpoint
-          ? 'Parser endpoint is missing. Fill AI API URL or set TICKET_PARSE_API_URL in .env.'
-          : 'TICKET_PARSE_API_URL is missing and client endpoint input is disabled by ALLOW_CLIENT_AI_ENDPOINT=false.'
-      );
+      throw new HttpError(400, missingParserMessage());
     }
 
     const result = await probeTicketParser(parser);
@@ -328,12 +327,7 @@ router.post('/tickets/recognize', upload.single('image'), async (req, res, next)
 
     const parser = resolveTicketParser(req.body || {});
     if (!parser.endpoint) {
-      throw new HttpError(
-        400,
-        parser.allowClientEndpoint
-          ? 'Parser endpoint is missing. Fill AI API URL or set TICKET_PARSE_API_URL in .env.'
-          : 'TICKET_PARSE_API_URL is missing and client endpoint input is disabled by ALLOW_CLIENT_AI_ENDPOINT=false.'
-      );
+      throw new HttpError(400, missingParserMessage());
     }
 
     const ticket = await callTicketParser(req.file, parser);

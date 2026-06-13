@@ -68,8 +68,6 @@ const aiPreview = el('aiPreview');
 const runAiFill = el('runAiFill');
 const testAiApi = document.createElement('button');
 const aiToast = el('aiToast');
-const aiEndpointInput = el('aiEndpointInput');
-const aiKeyInput = el('aiKeyInput');
 
 testAiApi.className = 'btn btn-secondary';
 testAiApi.type = 'button';
@@ -212,8 +210,6 @@ async function recognizeTicket() {
   aiToast.textContent = '正在识别票据图片...';
   const payload = new FormData();
   payload.append('image', file);
-  payload.append('endpoint', aiEndpointInput.value.trim());
-  payload.append('apiKey', aiKeyInput.value.trim());
 
   try {
     const data = await api('/api/tickets/recognize', {
@@ -239,10 +235,7 @@ async function testAiApiConnection() {
   try {
     const data = await api('/api/tickets/recognize/test', {
       method: 'POST',
-      body: JSON.stringify({
-        endpoint: aiEndpointInput.value.trim(),
-        apiKey: aiKeyInput.value.trim()
-      })
+      body: JSON.stringify({})
     });
     const status = data.status ? `HTTP ${data.status}` : '无 HTTP 状态';
     const cost = Number.isFinite(Number(data.elapsedMs)) ? `${data.elapsedMs}ms` : '-';

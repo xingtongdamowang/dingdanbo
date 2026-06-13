@@ -29,7 +29,7 @@ module.exports = {
     ticketParseUrl: process.env.TICKET_PARSE_API_URL || '',
     ticketParseApiKey: process.env.TICKET_PARSE_API_KEY || '',
     ticketParseMode: process.env.TICKET_PARSE_API_MODE || 'auto',
-    ticketParseModel: process.env.TICKET_PARSE_MODEL || 'mimov2.5pro',
+    ticketParseModel: process.env.TICKET_PARSE_MODEL || 'gpt-5.5',
     allowClientEndpoint: process.env.ALLOW_CLIENT_AI_ENDPOINT === 'true'
   }
 };
