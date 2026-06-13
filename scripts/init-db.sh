@@ -3,16 +3,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ENV_FILE:-"$ROOT_DIR/.env"}"
-SEED=0
 CREATE_DB=0
 
 usage() {
   cat <<'USAGE'
 Usage:
-  bash scripts/init-db.sh [--seed] [--create-db]
+  bash scripts/init-db.sh [--create-db]
 
 Options:
-  --seed       Import sql/seed.sql after creating tables.
   --create-db Try to create DB_NAME before applying schema.
 
 Environment:
@@ -24,7 +22,6 @@ USAGE
 
 for arg in "$@"; do
   case "$arg" in
-    --seed) SEED=1 ;;
     --create-db) CREATE_DB=1 ;;
     -h|--help)
       usage
@@ -103,10 +100,5 @@ fi
 
 echo "Applying schema: sql/schema.sql"
 "$MYSQL_BIN" "${MYSQL_ARGS[@]}" "$DB_NAME" < "$ROOT_DIR/sql/schema.sql"
-
-if [[ "$SEED" -eq 1 ]]; then
-  echo "Importing seed data: sql/seed.sql"
-  "$MYSQL_BIN" "${MYSQL_ARGS[@]}" "$DB_NAME" < "$ROOT_DIR/sql/seed.sql"
-fi
 
 echo "Database initialization complete."

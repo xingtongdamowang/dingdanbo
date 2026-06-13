@@ -29,11 +29,6 @@ async function main() {
     const schema = fs.readFileSync(path.join(config.rootDir, 'sql/schema.sql'), 'utf8');
     await connection.query(schema);
 
-    if (process.argv.includes('--seed')) {
-      const seed = fs.readFileSync(path.join(config.rootDir, 'sql/seed.sql'), 'utf8');
-      await connection.query(seed);
-    }
-
     console.log(`数据库 ${database} 初始化完成`);
   } finally {
     await connection.end();

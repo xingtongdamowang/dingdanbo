@@ -11,6 +11,27 @@
 <style>
 .ai-uploader{border:1px solid var(--border);border-radius:18px;padding:18px;background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 10%,var(--surface)),var(--surface));display:grid;gap:14px}.api-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:var(--gap-sm)}.file-drop{position:relative;border:1px dashed color-mix(in oklch,var(--accent) 48%,var(--border));border-radius:16px;padding:18px;background:color-mix(in oklch,var(--surface) 86%,var(--accent-soft));display:grid;gap:8px}.file-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.file-drop strong{font-size:15px}.ai-preview{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}.ai-preview img{width:54px;height:54px;border-radius:12px;object-fit:cover;border:1px solid var(--border);background:var(--surface)}.ticket-grid{grid-template-columns:1fr 1fr 1fr}.parlay-board{border:1px solid var(--border);border-radius:18px;padding:18px;background:color-mix(in oklch,var(--surface) 92%,var(--bg));display:grid;gap:16px}.leg-builder{display:grid;grid-template-columns:1fr 1.35fr 1fr 1fr auto;gap:var(--gap-sm);align-items:end}.legs-list{display:grid;gap:10px}.leg-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--surface)}.leg-index{width:28px;height:28px;border-radius:999px;background:var(--fg);color:var(--surface);display:grid;place-items:center;font-family:var(--font-mono);font-size:12px}.leg-main strong{display:block;font-size:15px}.leg-meta{margin-top:4px;color:var(--muted);font-size:13px}.leg-actions .btn{min-height:30px;padding:5px 9px;border-radius:8px;font-size:12px}.ticket-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border:1px solid var(--border);border-radius:16px;padding:14px;background:var(--surface)}.ticket-preview div{display:grid;gap:2px}.ticket-preview span{color:var(--muted);font-size:12px}.ticket-preview strong{font-family:var(--font-mono);font-variant-numeric:tabular-nums}.record-match-list{margin-top:8px;display:grid;gap:4px}.record-match-list span{display:block;color:var(--muted);font-size:12px;line-height:1.45}.settle-leg-list{display:grid;gap:8px}.settle-leg{border-top:1px solid var(--border);padding-top:8px;color:var(--muted);font-size:13px}.input-help{margin:0;color:var(--muted);font-size:12px;line-height:1.45}.is-empty-note{border:1px dashed var(--border);border-radius:14px;padding:14px;color:var(--muted);text-align:center;font-size:14px}.source-pill{display:inline-flex;align-items:center;border-radius:999px;background:var(--accent-soft);color:var(--accent);padding:3px 8px;font-size:11px;font-family:var(--font-mono)}@media(max-width:1080px){.leg-builder,.api-grid,.ticket-grid{grid-template-columns:1fr 1fr}.leg-builder .btn{grid-column:1/-1}}@media(max-width:760px){.leg-builder,.api-grid,.ticket-grid,.ticket-preview{grid-template-columns:1fr}.leg-item{grid-template-columns:auto 1fr}.leg-actions{grid-column:1/-1}.ai-preview{align-items:flex-start}}
 </style>
+<style>
+:root{--bg:#f8fbf8;--surface:#ffffff;--fg:#1f2a23;--muted:#68746c;--border:#dfe7e1;--accent:#2f8d59;--success:#2f8d59;--warning:#b5821f;--danger:#b75a55;--accent-soft:rgba(47,141,89,.12);--fg-soft:rgba(31,42,35,.06)}
+body{background:linear-gradient(180deg,#f8fbf8 0%,#ffffff 52%,#f4faf6 100%);color:var(--fg)}
+h1,.h1,h2,.h2,.btn{letter-spacing:0}
+.topnav{background:rgba(248,251,248,.94)}
+.btn-primary:hover{background:#247247}
+.card{background:#ffffff}
+.product-shell{box-shadow:0 24px 64px rgba(31,42,35,.1)}
+.shell-head,.mini-card,.notice,.settle-target,.parlay-board{background:#f8fbf8}
+.ds-table tbody tr:hover{background:rgba(31,42,35,.05)}
+.status-pending{background:rgba(181,130,31,.12)}
+.status-win{background:rgba(47,141,89,.12)}
+.status-lost{background:rgba(183,90,85,.1)}
+.bar.is-negative{background:#b75a55}
+.ai-uploader{background:linear-gradient(135deg,rgba(47,141,89,.08),#ffffff)}
+.file-drop{border-color:rgba(47,141,89,.48);background:rgba(47,141,89,.06)}
+.source-pill{background:rgba(47,141,89,.12)}
+.ai-actions{justify-content:flex-start;flex-wrap:wrap}
+.ai-actions .toast{margin-left:auto;min-width:min(320px,100%)}
+@media(max-width:760px){.ai-actions .btn{width:auto;flex:1 1 150px}.ai-actions .toast{width:100%;margin-left:0}}
+</style>
 </head>
 <body>
 <header class="topnav" data-od-id="topnav"><div class="container topnav-inner"><a class="logo" href="#overview" aria-label="球单簿首页"><span class="logo-mark">球</span><span>球单簿</span></a><nav aria-label="主导航"><a href="#quick-entry">快速录入</a><a href="#verify">赛果核验</a><a href="#analytics">盈亏趋势</a></nav><button class="btn btn-primary" data-jump="quick-entry">新增串关单</button></div></header>
@@ -30,7 +51,7 @@
 <div class="row-between">
 <div>
 <strong>AI 自动填单</strong>
-<p class="input-help">上传票据截图后，可调用你填入的识别 API；未配置时使用演示识别结果，并把赛事、玩法、选项、金额与倍数写入下方表单。</p>
+<p class="input-help">上传票据截图后，会调用已配置的识别 API；未配置时会提示错误，不再填入演示数据。</p>
 </div>
 <span class="source-pill">API READY</span>
 </div>
@@ -41,7 +62,7 @@
 </div>
 <div class="field">
 <label for="aiKeyInput">API Key</label>
-<input class="input" id="aiKeyInput" name="aiKey" type="password" placeholder="仅原型演示，本地内存保存" autocomplete="off" />
+<input class="input" id="aiKeyInput" name="aiKey" type="password" placeholder="仅用于本次请求，服务器不保存" autocomplete="off" />
 </div>
 </div>
 <label class="file-drop" for="ticketImageInput">

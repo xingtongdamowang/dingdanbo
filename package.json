@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "db:init": "node src/migrate.js",
-    "db:seed": "node src/migrate.js --seed"
+    "db:clear-demo": "node src/clear-demo-data.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

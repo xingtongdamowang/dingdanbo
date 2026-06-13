@@ -66,9 +66,17 @@ const previewStake = el('previewStake');
 const ticketImageInput = el('ticketImageInput');
 const aiPreview = el('aiPreview');
 const runAiFill = el('runAiFill');
+const testAiApi = document.createElement('button');
 const aiToast = el('aiToast');
 const aiEndpointInput = el('aiEndpointInput');
 const aiKeyInput = el('aiKeyInput');
+
+testAiApi.className = 'btn btn-secondary';
+testAiApi.type = 'button';
+testAiApi.id = 'testAiApi';
+testAiApi.textContent = '测试 API';
+runAiFill.parentElement.classList.add('ai-actions');
+runAiFill.insertAdjacentElement('afterend', testAiApi);
 
 const fmt = value => money.format(Number(value || 0)).replace('CN¥', '¥');
 const esc = value =>
@@ -214,9 +222,33 @@ async function recognizeTicket() {
     });
     state.uploadedImagePath = data.imagePath || '';
     applyRecognizedTicket(data.ticket);
+    if (data.usedFallback && data.parserError) {
+      aiToast.textContent = `识别接口失败：${data.parserError}`;
+      return;
+    }
     aiToast.textContent = data.usedFallback
-      ? '未配置有效识别接口，已填入演示识别结果。'
+      ? '识别接口未返回有效数据。'
       : 'AI 接口已返回，已自动填入串关明细。';
+  } catch (error) {
+    aiToast.textContent = error.message;
+  }
+}
+
+async function testAiApiConnection() {
+  aiToast.textContent = '正在测试识别 API...';
+  try {
+    const data = await api('/api/tickets/recognize/test', {
+      method: 'POST',
+      body: JSON.stringify({
+        endpoint: aiEndpointInput.value.trim(),
+        apiKey: aiKeyInput.value.trim()
+      })
+    });
+    const status = data.status ? `HTTP ${data.status}` : '无 HTTP 状态';
+    const cost = Number.isFinite(Number(data.elapsedMs)) ? `${data.elapsedMs}ms` : '-';
+    aiToast.textContent = data.ok
+      ? `API 可连通：${status}，耗时 ${cost}`
+      : `API 测试未通过：${data.message}`;
   } catch (error) {
     aiToast.textContent = error.message;
   }
@@ -398,6 +430,7 @@ ticketImageInput.addEventListener('change', () => {
 });
 
 runAiFill.addEventListener('click', recognizeTicket);
+testAiApi.addEventListener('click', testAiApiConnection);
 
 recordForm.addEventListener('submit', async event => {
   event.preventDefault();

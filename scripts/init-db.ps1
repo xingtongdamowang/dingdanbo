@@ -1,5 +1,4 @@
 param(
-  [switch]$Seed,
   [switch]$CreateDb,
   [string]$EnvFile
 )
@@ -64,11 +63,5 @@ if ($CreateDb) {
 $SchemaPath = Join-Path $RootDir "sql/schema.sql"
 Write-Host "Applying schema: $SchemaPath"
 Get-Content -LiteralPath $SchemaPath -Encoding UTF8 -Raw | & $MysqlBin @MysqlArgs $DbName
-
-if ($Seed) {
-  $SeedPath = Join-Path $RootDir "sql/seed.sql"
-  Write-Host "Importing seed data: $SeedPath"
-  Get-Content -LiteralPath $SeedPath -Encoding UTF8 -Raw | & $MysqlBin @MysqlArgs $DbName
-}
 
 Write-Host "Database initialization complete."
