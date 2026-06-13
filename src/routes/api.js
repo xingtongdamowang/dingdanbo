@@ -19,13 +19,22 @@ function normalizeTicketPayload(payload) {
     const match = String(value || '').match(/\d+(?:\.\d+)?/);
     return match ? Number(match[0]) : undefined;
   };
+  const toText = value => {
+    if (Array.isArray(value)) {
+      return value.map(item => toText(item)).filter(Boolean).join(' / ');
+    }
+    if (value && typeof value === 'object') {
+      return toText(value.pick || value.selection || value.value || value.name || value.label);
+    }
+    return String(value || '').trim();
+  };
   const toLegs = legs =>
     Array.isArray(legs)
       ? legs.map(item => ({
-          league: item.league || '',
+          league: item.league || item.matchNo || item.game || '',
           match: item.match || `${item.home || 'home'} vs ${item.away || 'away'}`,
-          play: item.play || item.market || '',
-          pick: item.pick || item.selection || ''
+          play: toText(item.play || item.market || item.playType || item.betType || item.gameType),
+          pick: toText(item.pick || item.selection || item.selections || item.options || item.selected)
         }))
       : [];
   const canonicalTicketType = (value, note, legs) => {
@@ -144,6 +153,24 @@ function extractJsonObject(text) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+function parserHttpErrorMessage(status, raw) {
+  let message = String(raw || '').trim();
+  try {
+    const payload = JSON.parse(message);
+    message = payload.error?.message || payload.message || message;
+  } catch (error) {
+    if (/^<!doctype html/i.test(message)) {
+      message = '识别服务网关异常，请稍后重试或切换模型。';
+    }
+  }
+
+  if (/No endpoints found that support image input/i.test(message)) {
+    return '当前识别服务模型不支持图片输入，请在 .env 中切换到支持视觉的 TICKET_PARSE_MODEL 后重试。';
+  }
+
+  return `识别服务返回 HTTP ${status}: ${message.slice(0, 200)}`;
+}
+
 async function probeTicketParser(parser) {
   const started = Date.now();
   const controller = new AbortController();
@@ -247,7 +274,7 @@ async function callOpenAiTicketParser(file, parser) {
   }
 
   if (!response.ok) {
-    throw new HttpError(502, `识别服务返回 HTTP ${response.status}: ${raw.slice(0, 200)}`);
+    throw new HttpError(502, parserHttpErrorMessage(response.status, raw));
   }
 
   let payload;
